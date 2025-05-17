@@ -4,6 +4,11 @@ This is a lightweight chatbot backend powered by **FastAPI**, **MongoDB**, and a
 
 ---
 
+
+https://github.com/user-attachments/assets/a450cf1e-288b-42fb-9e37-f0f9b7ed7fee
+
+
+---
 ## 📁 Project Structure  
 ├── app/  
 │ ├── api/   # FastAPI route handlers 
@@ -103,3 +108,4 @@ Streaming support is planned — you can uncomment the provided stream_response(
 Pull requests and improvements are welcome! 
 
 If you spot bugs or have ideas for improvement, feel free to open an issue.
+
