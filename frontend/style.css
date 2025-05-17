@@ -1,0 +1,399 @@
+/* --- Global Styles & Variables --- */
+/* Replace the :root block in style.css with this */
+:root {
+    --bg-color-dark: #1a202c;        /* Overall background (very dark blue/gray) */
+    --sidebar-bg: #2d3748;          /* Sidebar background (dark slate blue) */
+    --chat-area-bg: #1a202c;        /* Main chat background (matches overall) */
+    --input-bg: #2d3748;            /* Input area background (dark slate blue) */
+    --input-text-bg: #2d3748;       /* Textarea background (dark slate blue) */
+    --message-user-bg: #319795;     /* User message bubble (teal) */
+    --message-ai-bg: #4a5568;       /* AI message bubble (darker gray-blue) */
+    --text-light: #e2e8f0;          /* Primary light text (light gray/blue) */
+    --text-medium: #a0aec0;         /* Secondary light text (medium gray/blue) */
+    --text-dark: #ffffff;           /* Text on dark backgrounds (white/light) */
+    --border-color: #4a5568;        /* Subtle borders (matching AI bubble) */
+    --accent-color: #38b2ac;        /* Buttons, highlights (brighter teal) */
+    --hover-bg-light: #4a5568;      /* Hover on lighter dark elements */
+    --hover-bg-dark: #718096;       /* Hover on darker elements (lighter gray-blue) */
+    --active-bg: #4a5568;           /* Active history item */
+    --error-color: #e53e3e;         /* Red for errors */
+    --code-bg: #171923;             /* Code block background (very dark, almost black) */
+    /* Keep the same fonts */
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling on body */
+    background-color: var(--bg-color-dark);
+    color: var(--text-light);
+}
+
+/* --- Layout --- */
+.chat-container {
+    display: flex;
+    height: 100vh; /* Full viewport height */
+    width: 100vw;  /* Full viewport width */
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+#new-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: transparent;
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    transition: background-color 0.2s ease;
+    text-align: left;
+    width: 100%;
+}
+#new-chat-btn span { /* Style the '+' sign */
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+#new-chat-btn:hover {
+    background-color: var(--hover-bg-light);
+}
+
+.history-container {
+    flex-grow: 1;
+    overflow-y: auto; /* Scroll only the history list area */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Important for flex item scrolling */
+}
+
+.history-container h2 {
+    font-size: 0.8em;
+    color: var(--text-medium);
+    margin-bottom: 10px;
+    padding: 0 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#chat-history {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#chat-history li {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    color: var(--text-light);
+}
+
+#chat-history li:hover {
+    background-color: var(--hover-bg-dark);
+}
+
+#chat-history li.active {
+    background-color: var(--active-bg);
+    font-weight: 500;
+}
+
+#chat-history li.loading {
+    color: var(--text-medium);
+    font-style: italic;
+    cursor: default;
+}
+#chat-history li.loading:hover {
+    background-color: transparent;
+}
+
+/* --- Main Chat Area --- */
+.chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--chat-area-bg);
+    overflow: hidden; /* Prevent entire area scroll, manage internally */
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--chat-area-bg); /* Same as chat for seamless look */
+    flex-shrink: 0; /* Prevent header shrinking */
+}
+
+.chat-header h2 {
+    font-size: 1.1em;
+    color: var(--text-light);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Messages Display --- */
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px 20px 0; /* Add padding top, remove bottom (handled by wrapper) */
+    overflow-y: auto; /* Enable scrolling for messages */
+    display: flex;
+    flex-direction: column;
+}
+
+.message-wrapper {
+    display: flex;
+    margin-bottom: 20px; /* Space between message blocks */
+    width: 100%;
+}
+.message-wrapper.user-wrapper {
+    justify-content: flex-end; /* Align user messages right */
+}
+
+.message {
+    padding: 12px 18px;
+    border-radius: 18px;
+    max-width: 80%; /* Limit message width */
+    line-height: 1.5;
+    word-wrap: break-word;
+    position: relative; /* For potential pseudo-elements */
+    display: flex; /* To align icon/label if added */
+    gap: 10px;
+}
+
+/* Add pseudo-elements for User/AI labels/icons */
+.message::before {
+    /* content: '👤'; */ /* Placeholder Icon/Label */
+    font-weight: bold;
+    flex-shrink: 0;
+    /* Add more styling here if using icons */
+}
+
+.message.user {
+    background-color: var(--message-user-bg);
+    color: var(--text-light);
+    border-bottom-right-radius: 5px;
+}
+.message.user::before {
+    /* content: 'You:'; */ /* Example Label */
+     display: none; /* Often user messages don't need a prefix */
+}
+
+.message.ai {
+    background-color: var(--message-ai-bg);
+    color: var(--text-light);
+    border-bottom-left-radius: 5px;
+}
+.message.ai::before {
+    /* content: 'AI:'; */ /* Example Label */
+    color: var(--accent-color); /* Style AI label */
+}
+
+.message-content {
+    /* Holds the actual text, code blocks etc. */
+    flex-grow: 1;
+}
+
+.message.loading {
+    background-color: var(--message-ai-bg);
+    color: var(--text-medium);
+    font-style: italic;
+    border-bottom-left-radius: 5px;
+}
+.message.loading::before {
+     content: 'AI:';
+     color: var(--text-medium);
+}
+
+.info-message {
+    text-align: center;
+    color: var(--text-medium);
+    font-style: italic;
+    margin: auto; /* Center vertically and horizontally */
+    padding: 20px;
+}
+
+
+/* --- Code Block Styling --- */
+.message pre {
+    background-color: var(--code-bg);
+    color: var(--text-light); /* Use light text for code */
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto; /* Allow horizontal scrolling for long lines */
+    margin: 10px 0; /* Space around code blocks */
+    border: 1px solid var(--border-color); /* Subtle border */
+}
+
+.message code { /* General inline code */
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.message pre code { /* Code specifically inside pre blocks */
+    background-color: transparent; /* Override general code style */
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    white-space: pre; /* Preserve whitespace */
+    display: block; /* Ensure block display for hljs */
+}
+/* highlight.js styles will apply here based on the theme CSS linked */
+
+.message :not(pre) > code { /* Inline code (not in pre) */
+     background-color: var(--hover-bg-light);
+     padding: 2px 5px;
+     border-radius: 4px;
+     color: var(--text-light);
+}
+
+/* Strong / Bold text */
+.message strong {
+    color: var(--text-light); /* Ensure it stands out */
+    font-weight: 600;
+}
+
+
+/* --- Input Area --- */
+.input-area-wrapper {
+    padding: 15px 20px 10px; /* Padding around the input */
+    border-top: 1px solid var(--border-color);
+    background-color: var(--chat-area-bg); /* Match chat bg */
+    flex-shrink: 0; /* Prevent shrinking */
+    margin-top: auto; /* Push to bottom */
+}
+
+.input-area {
+    display: flex;
+    align-items: flex-end; /* Align items to bottom (button with taller textarea) */
+    background-color: var(--input-bg);
+    border-radius: 12px; /* Rounded container */
+    padding: 5px 5px 5px 15px; /* Padding inside container */
+    border: 1px solid var(--border-color);
+    position: relative; /* For positioning button etc */
+}
+.input-area:focus-within { /* Highlight when textarea is focused */
+     border-color: var(--accent-color);
+}
+
+#message-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    background-color: transparent; /* Let parent provide bg */
+    color: var(--text-light);
+    font-size: 1em;
+    resize: none;
+    padding: 10px 0; /* Vertical padding */
+    line-height: 1.5;
+    max-height: 150px; /* Limit growth */
+    overflow-y: auto; /* Scroll if content exceeds max height */
+}
+#message-input::placeholder {
+    color: var(--text-medium);
+    opacity: 0.8;
+}
+
+#send-button {
+    background-color: var(--accent-color);
+    color: white; /* Icon color */
+    border: none;
+    border-radius: 8px; /* Slightly rounded button */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin-left: 8px; /* Space between textarea and button */
+    flex-shrink: 0; /* Prevent button shrinking */
+    transition: background-color 0.2s ease;
+}
+#send-button svg { /* Style the SVG icon */
+    width: 20px;
+    height: 20px;
+}
+
+#send-button:hover {
+    background-color: #6a78d1; /* Darker accent */
+}
+
+#send-button:disabled {
+    background-color: var(--hover-bg-dark);
+    color: var(--text-medium);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.disclaimer {
+    text-align: center;
+    font-size: 0.75em;
+    color: var(--text-medium);
+    padding-top: 8px;
+}
+
+/* --- Error Message Area --- */
+.error-message {
+    color: var(--error-color);
+    font-size: 0.9em;
+    min-height: 1.1em; /* Reserve space */
+    text-align: center;
+    padding-bottom: 5px; /* Space below error, above input box */
+}
+
+
+/* --- Scrollbar Styling (Optional, Webkit) --- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--sidebar-bg); /* Track background */
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--border-color); /* Handle color */
+    border-radius: 4px;
+    border: 2px solid var(--sidebar-bg); /* Padding around handle */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-medium); /* Handle hover color */
+}
+
+/* Apply slightly different scrollbar for chat messages area */
+.chat-messages::-webkit-scrollbar-track {
+    background: var(--chat-area-bg);
+}
+.chat-messages::-webkit-scrollbar-thumb {
+     border: 2px solid var(--chat-area-bg);
+}

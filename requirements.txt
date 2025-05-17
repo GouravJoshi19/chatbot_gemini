@@ -1,0 +1,9 @@
+langchain
+langchain-community
+langgraph
+fastapi 
+uvicorn
+pydantic
+pymongo[srv]
+python-dotenv
+langchain-google-genai
